@@ -1,0 +1,5 @@
+(library
+ (name blue_test)
+ (libraries lib eio_main eio.mock)
+ (inline_tests)
+ (preprocess (pps ppx_inline_test ppx_expect)))
