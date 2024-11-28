@@ -1,0 +1,4 @@
+version = 0.26.2
+profile = default
+break-cases = toplevel
+type-decl = sparse
