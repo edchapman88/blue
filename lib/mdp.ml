@@ -1,59 +1,38 @@
-module type Mdp = sig
-  type obs
-  type observer = unit -> obs
-  type 'a action = unit -> 'a
-  type 'a reward
+(** The input signature of the functor [Make]. *)
+module type PolicyType = sig
+  type t
+  type state
+  type observer = unit -> state
+  type action = unit -> unit
 
-  type 'a inference = {
-    action : 'a action;
+  type inference = {
+    action : action;
     observer : observer;
   }
 
-  val infer : 'a -> obs -> 'a inference
-  val act : 'a action -> observer -> 'a
+  val infer : t -> state -> inference
 end
 
-module Simple : Mdp = struct
-  type obs =
-    | Heads
-    | Tails
+(** The output signature of the functor [Make]. *)
+module type S = sig
+  type state
+  type observer = unit -> state
+  type action = unit -> unit
+  type policy
 
-  type observer = unit -> obs
-  type 'a action = unit -> 'a
-  type 'a reward
+  val act : policy -> action -> observer -> 'a
+end
 
-  type 'a inference = {
-    action : 'a action;
-    observer : observer;
-  }
+module Make (Policy : PolicyType) : S = struct
+  type state = Policy.state
+  type observer = Policy.observer
+  type action = Policy.action
+  type policy = Policy.t
 
-  let make_obs () = Heads
-
-  let regular_observer : observer =
-   fun () ->
-    Unix.sleep 3;
-    make_obs ()
-
-  let action_succeeded (_effect : unit) = true
-
-  let infer effect obs =
-    if Bool.not (action_succeeded effect) then
-      {
-        action = (fun () -> print_endline "try again?");
-        observer = regular_observer;
-      }
-    else
-      match obs with
-      | Heads ->
-          {
-            action = (fun () -> print_endline "cause side effect");
-            observer = regular_observer;
-          }
-      | _ -> failwith "policy doesn't cover this!"
-
-  let rec act action observer =
-    let effect = action () in
+  let rec act policy action observer =
+    let open Policy in
+    action ();
     let obs = observer () in
-    let { action = action'; observer = observer' } = infer effect obs in
-    act action' observer'
+    let { action = action'; observer = observer' } = Policy.infer policy obs in
+    act policy action' observer'
 end
