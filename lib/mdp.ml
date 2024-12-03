@@ -1,8 +1,14 @@
 (** See interface for documentation. *)
 module type PolicyType = sig
   type t
+
+  val init : unit -> t
+
   type state
   type observer = unit -> state
+
+  val init_observer : observer
+
   type action = unit -> unit
 
   type inference = {

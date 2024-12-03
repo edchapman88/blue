@@ -3,11 +3,16 @@ module type PolicyType = sig
   type t
   (** The policy. *)
 
+  val init : unit -> t
+  (** Initialise a [Policy.t]. *)
+
   type state
   (** The state (of an MDP). As input to [infer], [state] may optionally included a reward signal associated with the state transition from the previous state. A reward signal may be useful to the implementer of [infer] in order to return an updated policy in the returned record ([inference]). *)
 
   type observer = unit -> state
   (** A function returning a [state]. *)
+
+  val init_observer : observer
 
   type action = unit -> unit
   (** An effect to be carried in the environment. *)
