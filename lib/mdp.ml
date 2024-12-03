@@ -1,4 +1,4 @@
-(** The input signature of the functor [Make]. *)
+(** See interface for documentation. *)
 module type PolicyType = sig
   type t
   type state
@@ -8,31 +8,38 @@ module type PolicyType = sig
   type inference = {
     action : action;
     observer : observer;
+    policy : t;
   }
 
   val infer : t -> state -> inference
 end
 
-(** The output signature of the functor [Make]. *)
-module type S = sig
-  type state
-  type observer = unit -> state
-  type action = unit -> unit
-  type policy
+(** See interface for documentation. *)
+module type Actor = sig
+  module Policy : PolicyType
 
-  val act : policy -> action -> observer -> 'a
-end
-
-module Make (Policy : PolicyType) : S = struct
   type state = Policy.state
   type observer = Policy.observer
   type action = Policy.action
   type policy = Policy.t
 
-  let rec act policy action observer =
-    let open Policy in
-    action ();
+  val act : policy -> observer -> 'a
+end
+
+(** Implementation for the functor [Make]. *)
+module Make (P : PolicyType) = struct
+  module Policy = P
+
+  type state = Policy.state
+  type observer = Policy.observer
+  type action = Policy.action
+  type policy = Policy.t
+
+  let rec act policy observer =
     let obs = observer () in
-    let { action = action'; observer = observer' } = Policy.infer policy obs in
-    act policy action' observer'
+    let Policy.{ action; observer = observer'; policy = policy' } =
+      Policy.infer policy obs
+    in
+    action ();
+    act policy' observer'
 end
