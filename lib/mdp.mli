@@ -4,7 +4,7 @@ module type PolicyType = sig
   (** The policy. *)
 
   type state
-  (** The state (of an MDP). *)
+  (** The state (of an MDP). As input to [infer], [state] may optionally included a reward signal associated with the state transition from the previous state. A reward signal may be useful to the implementer of [infer] in order to return an updated policy in the returned record ([inference]). *)
 
   type observer = unit -> state
   (** A function returning a [state]. *)
@@ -14,6 +14,7 @@ module type PolicyType = sig
 
   type inference = {
     action : action;
+        (** For the Markov Chain assumption to hold the action should 'cause effect' sooner than the [observer] returns the next [state]. *)
     observer : observer;
     policy : t;
   }
@@ -30,7 +31,10 @@ module type Actor = sig
 
   type state = Policy.state
   type observer = Policy.observer
+
   type action = Policy.action
+  (** Whilst [action] and [observer] are called sequentially (rather than concurrently) in the [act] loop, the implementing policy must ensure that [action] 'causes effect' on the system sooner than the subsequent [state] is returned by the [observer], if the Markov Chain assumption is to hold. *)
+
   type policy = Policy.t
 
   val act : policy -> observer -> 'a
