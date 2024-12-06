@@ -22,30 +22,25 @@ end
 
 (** See interface for documentation. *)
 module type Actor = sig
-  module Policy : PolicyType
+  type policy
 
-  type state = Policy.state
-  type observer = Policy.observer
-  type action = Policy.action
-  type policy = Policy.t
-
-  val act : policy -> observer -> 'a
+  val act : policy -> 'a
 end
 
 (** Implementation for the functor [Make]. *)
 module Make (P : PolicyType) = struct
-  module Policy = P
+  type policy = P.t
 
-  type state = Policy.state
-  type observer = Policy.observer
-  type action = Policy.action
-  type policy = Policy.t
-
-  let rec act policy observer =
-    let obs = observer () in
-    let Policy.{ action; observer = observer'; policy = policy' } =
-      Policy.infer policy obs
+  let act policy =
+    (* Define the inner recursive loop. *)
+    let rec loop policy observer =
+      let obs = observer () in
+      let P.{ action; observer = observer'; policy = policy' } =
+        P.infer policy obs
+      in
+      action ();
+      loop policy' observer'
     in
-    action ();
-    act policy' observer'
+    (* Start the loop with the [init_observer] defined by the policy module [P]. *)
+    loop policy P.init_observer
 end

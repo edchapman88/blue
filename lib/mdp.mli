@@ -1,4 +1,4 @@
-(** A policy for infering an [action] and an [observer] given a [state]. [PolicyType] is the input signature of the functor [Make]. *)
+(** A policy for infering an [action] and an [observer] given a [state]. [PolicyType] is the input signature of the functor [Make]. [PolicyType] is the {b minimal} interface that must be provided by an input to the functor [Make], i.e. a policy may be of type [ComplexPolicy] which exposes an interface that is a superset of the [PolicyType] interface. *)
 module type PolicyType = sig
   type t
   (** The policy. *)
@@ -10,9 +10,10 @@ module type PolicyType = sig
   (** The state (of an MDP). As input to [infer], [state] may optionally included a reward signal associated with the state transition from the previous state. A reward signal may be useful to the implementer of [infer] in order to return an updated policy in the returned record ([inference]). *)
 
   type observer = unit -> state
-  (** A function returning a [state]. *)
+  (** A function returning a [state]. The function may intentionally block in order to delay the next observation, i.e. this function controls (dynamically) the rate at which the MDP progresses in time, relative to the progression of the underlying system. *)
 
   val init_observer : observer
+  (** An initial observer. Upon execution the returned [state] may be passed as an argument to [infer] in order to produce subsequent [observers]. *)
 
   type action = unit -> unit
   (** An effect to be carried in the environment. *)
@@ -31,20 +32,26 @@ end
 
 (** An MDP Actor. The output signature of the functor [Make]. *)
 module type Actor = sig
-  module Policy : PolicyType
-  (** The Actor's policy. Responsible for infering an [action] and an [observer for the next step of the MDP. *)
+  type policy
+  (** The Actor's policy. As argument to the [act] function, the policy determines how the Actor i) obtains the state of the MDP, ii) decides what action to take, and iii) how the action is executed on the process. *)
 
-  type state = Policy.state
-  type observer = Policy.observer
-
-  type action = Policy.action
-  (** Whilst [action] and [observer] are called sequentially (rather than concurrently) in the [act] loop, the implementing policy must ensure that [action] 'causes effect' on the system sooner than the subsequent [state] is returned by the [observer], if the Markov Chain assumption is to hold. *)
-
-  type policy = Policy.t
-
-  val act : policy -> observer -> 'a
-  (** [act policy observer] is an infinite (tail-recursive) loop modelling an MDP process. Each iteration of the loop involves 1.) calling the [observer], 2.) infering an [action], the next [observer], and a new policy by calling [Policy.infer] with the current policy and to the observed [state], and 3.) executing the action. *)
+  val act : policy -> 'a
+  (** [act policy] is an infinite (tail-recursive) loop modelling an MDP process. Each iteration of the loop involves i) measuring the state of the MDP, ii) infering an action to take, iii) infering a method to next measure the state of the MDP, iv) executing the action, and v) repeating from i). *)
 end
 
-(** A functor. [Make P] returns an [Actor] module that is parameterised by the policy module [P]. *)
-module Make (P : PolicyType) : Actor with module Policy = P
+(** A functor. [Make P] returns an [Actor] module that is parameterised by the policy module [P]. [P] must have a type that {i includes} the interface [PolicyType] (e.g. it may be of type [PolicyType] or a {i 'super-type'} of [PolicyType]). 
+
+This functor should implement the [act] function as follows:
+
+1. Use the policy module [P] to obtain an initial observer ([PolicyType.init_observer]). 
+
+2. Commence an infinite loop in which the Actor's [policy] and a [P.observer] are used to:
+
+  i) Obtain an observation of type [P.state] by executing the [P.observer] function.
+
+  ii) Execute [P.infer policy state] to determine a [P.action], a new [P.observer] and a new [policy].
+
+  iii) Execute the action.
+
+  iv) Re-enter the loop with the new [policy] and the new [P.observer]. *)
+module Make (P : PolicyType) : Actor with type policy = P.t

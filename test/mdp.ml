@@ -108,7 +108,7 @@ module Actor = Mdp.Make ((CountBased : Mdp.PolicyType))
 let%expect_test "Run MDP actor with a count-based policy" =
   Random.init 0;
   try
-    let _loop = Actor.act (CountBased.init ()) CountBased.init_observer in
+    let _loop = Actor.act (CountBased.init ()) in
     ()
   with System.End_Simulation -> (
     [%expect
@@ -152,7 +152,7 @@ let%expect_test "Run MDP actor with a count-based policy" =
     game_goal := Tails;
     System.reset ();
     try
-      let _loop = Actor.act (CountBased.init ()) CountBased.init_observer in
+      let _loop = Actor.act (CountBased.init ()) in
       ()
     with System.End_Simulation ->
       [%expect
