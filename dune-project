@@ -19,7 +19,7 @@
  (name blue)
  (synopsis "POMDP interface")
  (description "Interface between partially observable, concurrent systems and POMDPs.")
- (depends ocaml dune core)
+ (depends ocaml dune odoc core)
  (tags
   (topics "to describe" your project)))
 

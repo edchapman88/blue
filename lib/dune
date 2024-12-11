@@ -1,3 +1,5 @@
 (library
- (name lib)
+ (name blue)
+ (public_name blue)
  (libraries eio_main))
+(documentation)

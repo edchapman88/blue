@@ -1,4 +1,4 @@
-open! Lib
+open! Blue
 
 type coin =
   | Heads
