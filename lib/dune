@@ -1,5 +1,5 @@
 (library
  (name blue)
- (public_name blue)
- (libraries eio_main))
-(documentation)
+ (public_name blue))
+(documentation
+  (package blue))
