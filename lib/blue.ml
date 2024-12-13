@@ -1,7 +1,5 @@
 (** {1 Own stuff} 
     La la*)
 
-module Mdp = Mdp
-(** Great module *)
-
+module Actor = Actor
 module Rsystem = Rsystem

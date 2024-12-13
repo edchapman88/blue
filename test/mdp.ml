@@ -54,7 +54,7 @@ module System = struct
     { s = !state; r = reward }
 end
 
-module CountBased : Mdp.PolicyType = struct
+module CountBased : Actor.PolicyType = struct
   type t = (coin * reward) list
 
   let init () = []
@@ -103,12 +103,12 @@ module CountBased : Mdp.PolicyType = struct
     }
 end
 
-module Actor = Mdp.Make ((CountBased : Mdp.PolicyType))
+module Counter = Actor.Make ((CountBased : Actor.PolicyType))
 
 let%expect_test "Run MDP actor with a count-based policy" =
   Random.init 0;
   try
-    let _loop = Actor.act (CountBased.init ()) in
+    let _loop = Counter.act (CountBased.init ()) in
     ()
   with System.End_Simulation -> (
     [%expect
@@ -152,7 +152,7 @@ let%expect_test "Run MDP actor with a count-based policy" =
     game_goal := Tails;
     System.reset ();
     try
-      let _loop = Actor.act (CountBased.init ()) in
+      let _loop = Counter.act (CountBased.init ()) in
       ()
     with System.End_Simulation ->
       [%expect
