@@ -1,15 +1,20 @@
+(** Handle the continuous-time stream of information from a system and compress the information into a Markovian state representation such that the sequence of states returned by sequential calls to [observe] have the Markov property. *)
 module type MarkovCompressorType = sig
   type state
+
+  val observe : unit -> state
 end
 
+(** A reward function which is a map from a [state] to a [Reward.t option]. *)
 module type RewardType = sig
   type t
   type state
 
-  val fn : state * state -> t option
+  val fn : state -> t
+  (** [Reward.fn s] is the [Reward.t] associated with the MDP state [s]. *)
 end
 
-(** A policy for infering an [action] and an [observer] given a [state] and optionally a [reward]. [RLPolicyType] is the input signature of the functor [Make]. [RLPolicyType] is the {b minimal} interface that must be provided by an input to the functor [Make], i.e. a policy may be of type [ComplexPolicy] which exposes an interface that is a superset of the [RLPolicyType] interface. *)
+(** A policy for infering an [action] and an [observer] given a [state] and optionally a [reward]. *)
 module type RLPolicyType = sig
   type t
   (** The policy. *)
@@ -39,12 +44,10 @@ module type RLPolicyType = sig
   }
   (** Returned by [infer]. Contains an [action], an [observer], and a new [policy]. In this way the policy controls how (and therefore when) the next observation is obtained (e.g. after a desired delay). Returning a policy at each inference facilitates functionally pure policy updates. *)
 
-  val infer : t -> state * reward option -> inference
+  val infer : t -> state * reward -> inference
   (** [infer p (s,r)] applies the policy [p] of type [RLPolicyType.t] to the state [s]. An [inference] record is returned, containing an [action], an [observer] and an [RLPolicyType.t].
 
-  If [r] is [None] then [infer] should carry out inference {b only} (no optimisation), and the returned policy is expected to be unchanged. If [r] is [Some reward] then there is an expectation that the returned policy will be a new policy that has been optimised to maximise reward.
-
-  The interface allows for a more flexible interpretation of these suggestions if desired. *)
+  The returned policy may be equivalent to the input policy (no policy update) or it may be a new policy, having undergone an optimisation step. *)
 end
 
 (** An MDP Agent. The output signature of the functor [Make]. *)
@@ -56,24 +59,24 @@ module type Agent = sig
   (** [act policy] is an infinite (tail-recursive) loop modelling an MDP process. Each iteration of the loop involves i) measuring the state of the MDP, ii) infering an action to take, iii) infering a method to next measure the state of the MDP, iv) executing the action, and v) repeating from i). *)
 end
 
-(** A functor. [Make P] returns an [Actor] module that is parameterised by the policy module [P]. [P] must have a type that {i includes} the interface [PolicyType] (e.g. it may be of type [PolicyType] or a {i 'super-type'} of [PolicyType]). 
+(** A functor. [Make MarkovCompressor Reward Policy] returns an [Agent] module. For example, [Policy] must be a type that {i includes} the interface [RLPolicyType] (e.g. it may be of type [RLPolicyType] or a {i 'super-type'} of [RLPolicyType]). 
 
 This functor should implement the [act] function as follows:
 
-1. Use the policy module [P] to obtain an initial observer ([PolicyType.init_observer]). 
+1. Use the policy module to obtain an initial observer ([RLPolicyType.init_observer]). 
 
-2. Commence an infinite loop in which the Actor's [policy] and a [P.observer] are used to:
+2. Commence an infinite loop in which the Agent's [policy] and a [Policy.observer] are used to:
 
-  i) Obtain an observation of type [P.state] by executing the [P.observer] function.
+  i) Obtain an observation of type [Policy.state] by executing the [Policy.observer] function.
 
-  ii) Execute [P.infer policy state] to determine a [P.action], a new [P.observer] and a new [policy].
+  ii) Execute [Policy.infer policy state] to determine a [Policy.action], a new [Policy.observer] and a new [policy].
 
   iii) Execute the action.
 
-  iv) Re-enter the loop with the new [policy] and the new [P.observer]. *)
+  iv) Re-enter the loop with the new [policy] and the new [Policy.observer]. *)
 module Make
     (MarkovCompressor : MarkovCompressorType)
-    (Reward : RewardType)
+    (Reward : RewardType with type state = MarkovCompressor.state)
     (Policy : RLPolicyType
                 with type state = MarkovCompressor.state
                 with type reward = Reward.t) : Agent with type policy = Policy.t

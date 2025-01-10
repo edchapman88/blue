@@ -13,15 +13,8 @@ let random_eff () =
   | true -> Wait
   | false -> Flip
 
-type reward = int
-
 (** Initially set [Heads] as the goal state. *)
 let game_goal = ref Heads
-
-type sys_state = {
-  s : coin;
-  r : reward;
-}
 
 module System = struct
   let state = ref Heads
@@ -50,19 +43,32 @@ module System = struct
     steps := !steps + 1;
     if !steps > 30 then raise End_Simulation;
     !state |> string_of_state |> print_string;
-    let reward = if !state = !game_goal then 1 else 0 in
-    { s = !state; r = reward }
+    !state
 end
 
-module CountBased : Actor.PolicyType = struct
-  type t = (coin * reward) list
+module MarkovCompressor = struct
+  (* In this problem, [coin] as the the type for state will result in a sequence of states that have the Markov property (because the variable [coin] contains all the information required to understand the transition to the next state, given some action). *)
+  type state = coin
+
+  let observe = System.observe
+end
+
+module Reward = struct
+  type state = MarkovCompressor.state
+  type t = int
+
+  let fn state = if state = !game_goal then 1 else 0
+end
+
+module CountBased = struct
+  type reward = Reward.t
+  type state = MarkovCompressor.state
+  type t = (state * reward) list
+  type observer = unit -> state
+  type action = unit -> unit
 
   let init () = []
   let init_observer = System.observe
-
-  type state = sys_state
-  type observer = unit -> sys_state
-  type action = unit -> unit
 
   type inference = {
     action : action;
@@ -81,14 +87,14 @@ module CountBased : Actor.PolicyType = struct
     in
     if h_sum > t_sum then Heads else Tails
 
-  let infer policy state =
-    let policy' = (state.s, state.r) :: policy in
+  let infer policy (state, reward) =
+    let policy' = (state, reward) :: policy in
     let goal = most_valuable policy in
     let chosen_eff =
       (* Exploration. *)
       if List.length policy < 20 then random_eff ()
       else if (* Exploitation. *)
-              state.s = goal then Wait
+              state = goal then Wait
       else Flip
     in
     if List.length policy == 20 then print_endline "\n   Start exploiting";
@@ -103,7 +109,7 @@ module CountBased : Actor.PolicyType = struct
     }
 end
 
-module Counter = Actor.Make ((CountBased : Actor.PolicyType))
+module Counter = Agent.Make (MarkovCompressor) (Reward) (CountBased)
 
 let%expect_test "Run MDP actor with a count-based policy" =
   Random.init 0;
