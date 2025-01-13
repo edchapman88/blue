@@ -4,7 +4,7 @@ type coin =
   | Heads
   | Tails
 
-type effect =
+type action =
   | Wait
   | Flip
 
@@ -30,8 +30,8 @@ module System = struct
     | Heads -> Printf.sprintf "%i Heads" !steps
     | Tails -> Printf.sprintf "%i Tails" !steps
 
-  let exec_effect effect =
-    match effect with
+  let exec_effect action =
+    match action with
     | Wait -> print_endline " -> Wait"
     | Flip -> (
         print_endline " -> Flip";

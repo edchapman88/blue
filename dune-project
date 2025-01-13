@@ -15,6 +15,6 @@
 
 (package
  (name blue)
- (synopsis "Interface between RL agents and continuous-time, concurrrently-running system.")
+ (synopsis "Interface between RL agents and continuous-time, concurrrently-running system")
  (description "Reinforcement learning agents assume they are interacting with a Markov Decision Process (MDP). Real-world systems are continuous-time and run concurrently with RL agents processes. This project provides a set of abstract interfaces that attempt to formalise the software components that must be implemented in order to develop an MDP-assuming RL agent capably of interacting with a continuous-time, concurrently-running system.")
- (depends ocaml dune odoc core))
+ (depends (ocaml (>= 5.0)) dune odoc core))
