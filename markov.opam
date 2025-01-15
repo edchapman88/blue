@@ -12,8 +12,7 @@ bug-reports: "https://github.com/edchapman88/blue/issues"
 depends: [
   "ocaml" {>= "5.0"}
   "dune" {>= "3.16"}
-  "odoc"
-  "core"
+  "odoc" {with-doc}
 ]
 build: [
   ["dune" "subst"] {dev}

@@ -1,4 +1,4 @@
-open! Blue
+open! Markov
 
 type coin =
   | Heads

@@ -1,5 +1,5 @@
 (library
- (name blue_test)
- (libraries blue unix)
+ (name markov_test)
+ (libraries markov unix)
  (inline_tests)
  (preprocess (pps ppx_inline_test ppx_expect)))

@@ -1,5 +1,5 @@
 (library
- (name blue)
- (public_name blue))
+ (name markov)
+ (public_name markov))
 (documentation
-  (package blue))
+  (package markov))
