@@ -37,7 +37,7 @@ module type RLPolicyType = sig
 end
 
 (** See interface for documentation. *)
-module type Agent = sig
+module type S = sig
   type policy
 
   val act : policy -> 'a

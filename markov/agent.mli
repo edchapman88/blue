@@ -51,7 +51,7 @@ module type RLPolicyType = sig
 end
 
 (** An MDP Agent. The output signature of the functor [Make]. *)
-module type Agent = sig
+module type S = sig
   type policy
   (** The Agent's policy. As argument to the [act] function, the policy determines how the Agent i) obtains the state of the MDP, ii) decides what action to take, and iii) how the action is executed on the process. *)
 
@@ -79,4 +79,4 @@ module Make
     (Reward : RewardType with type state = MarkovCompressor.state)
     (Policy : RLPolicyType
                 with type state = MarkovCompressor.state
-                with type reward = Reward.t) : Agent with type policy = Policy.t
+                with type reward = Reward.t) : S with type policy = Policy.t
