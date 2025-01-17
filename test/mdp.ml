@@ -68,7 +68,7 @@ module CountBased = struct
   type action = unit -> unit
 
   let init () = []
-  let init_observer = System.observe
+  let init_observer = MarkovCompressor.observe
 
   type inference = {
     action : action;
