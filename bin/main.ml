@@ -32,10 +32,13 @@ module System = struct
     | _ -> failwith "unreachable"
 
   let exec_eff eff =
-    match eff with
-    | Wait -> ()
-    | ToggleGreen -> failwith "TODO"
-    | ToggleRed -> failwith "TODO"
+    if
+      (match eff with
+      | Wait -> 0
+      | ToggleGreen -> Sys.command "echo g >> command_hist.txt"
+      | ToggleRed -> Sys.command "echo r >> command_hist.txt")
+      != 0
+    then failwith "Toggle action failed with non-zero exit code"
 end
 
 module MarkovCompressor = struct

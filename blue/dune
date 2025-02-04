@@ -1,0 +1,8 @@
+(library
+ (name blue)
+ (public_name blue)
+ (libraries
+   lwt.unix
+   unix
+   domainslib))
+
