@@ -1,17 +1,20 @@
 open Domainslib
 
-let recvfrom addr =
-  let fd = Unix.socket ~cloexec:true PF_INET SOCK_DGRAM 0 in
+let serial addr () =
+  print_endline "serial fn";
+  match addr with
+  | Unix.ADDR_INET _ -> failwith "unreachable"
+  | Unix.ADDR_UNIX dev -> Serial.read dev
+
+let udp addr () =
+  let fd = Unix.socket ~cloexec:false PF_INET SOCK_DGRAM 0 in
   Unix.bind fd addr;
-  (*Unix.listen fd 100;*)
-  let buf_len = 100 in
+  (*Unix.listen fd 1000;*)
+  let buf_len = 1024 in
   let buf = Bytes.create buf_len in
   let len, _src = Unix.recvfrom fd buf buf_len 0 [] in
-  (*Unix.close fd;*)
-  if len = 0 then None
-  else (
-    print_endline "got";
-    Some (Bytes.sub buf 0 len))
+  Unix.close fd;
+  if len = 0 then None else Some (Bytes.sub buf 0 len)
 
 let all_received chan =
   let rec aux acc =
@@ -35,17 +38,28 @@ let ok_rate window_secs msg_chan () =
   relevant := List.rev relevant';
   float_of_int num_ok /. window_secs
 
-let rec listen chan addr =
-  match recvfrom addr with
-  | None -> listen chan addr
-  | Some msgs ->
-      Bytes.iter
-        (fun msg ->
-          if msg = '1' then
-            let time = Unix.gettimeofday () in
-            Chan.send chan time)
-        msgs;
-      listen chan addr
+let listen chan addr =
+  let listener =
+    match addr with
+    | Unix.ADDR_UNIX _ -> serial
+    | Unix.ADDR_INET _ -> udp
+  in
+  let rec loop () =
+    (*let time = Unix.gettimeofday () in*)
+    (*if time -. Float.floor time < 0.001 then Printf.printf "time: %f\n" time;*)
+    match listener addr () with
+    | None -> loop ()
+    | Some msgs ->
+        Bytes.iter
+          (fun msg ->
+            if msg = '1' then
+              let time = Unix.gettimeofday () in
+              Chan.send chan time)
+          msgs;
+        print_endline "sent bytes";
+        loop ()
+  in
+  loop ()
 
 let receiver window_secs addr =
   let msg_chan = Chan.make_unbounded () in
