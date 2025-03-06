@@ -14,3 +14,4 @@ val init : string -> unit
 (** [init port] initialises the module, using the serial port address [port]. *)
 
 val read : string -> bytes option
+val write : string -> string -> unit
