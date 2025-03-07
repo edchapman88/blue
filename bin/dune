@@ -2,4 +2,4 @@
  (package blue)
  (public_name blue)
  (name main)
- (libraries markov unix))
+ (libraries markov unix blue))

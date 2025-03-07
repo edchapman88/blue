@@ -4,5 +4,6 @@
  (libraries
    lwt.unix
    unix
-   domainslib))
+   domainslib
+   re))
 

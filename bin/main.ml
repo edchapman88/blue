@@ -10,14 +10,30 @@
 *)
 
 module System = struct
-  let green_ip = "172.0.0.2"
-  let red_ip = "172.0.0.3"
-  let request_rate = 20
+  open Blue
 
-  module BlockedSet = Set.Make (String)
+  type response_signal = {
+    channel : Unix.sockaddr;
+    rolling_window_secs : float;
+  }
 
-  let ok_rate () = failwith "TODO"
-  let blocked_ips () = BlockedSet.empty
+  let res_sig =
+    {
+      channel = Cli.response_signal_addr ();
+      rolling_window_secs = Cli.rolling_window_secs ();
+    }
+
+  let green_ip = Cli.green_ip ()
+  let red_ip = Cli.red_ip ()
+  let request_rate = 1. /. Cli.request_interval ()
+
+  let ok_rate =
+    Receiver.(receiver_of_reader @@ reader_of_addr @@ res_sig.channel)
+      ~window_secs:res_sig.rolling_window_secs
+
+  module BlockedSet = Blocked.BlockedSet
+
+  let blocked_ips = Blocked.query_blocked
 
   type eff =
     | Wait
@@ -32,18 +48,21 @@ module System = struct
     | _ -> failwith "unreachable"
 
   let exec_eff eff =
-    if
-      (match eff with
-      | Wait -> 0
-      | ToggleGreen -> Sys.command "echo g >> command_hist.txt"
-      | ToggleRed -> Sys.command "echo r >> command_hist.txt")
-      != 0
-    then failwith "Toggle action failed with non-zero exit code"
+    let open Blocked in
+    let action =
+      match eff with
+      | Wait -> Ok ()
+      | ToggleGreen -> toggle_block green_ip
+      | ToggleRed -> toggle_block red_ip
+    in
+    match action with
+    | Ok _ -> ()
+    | Error msg -> failwith msg
 end
 
 module MarkovCompressor = struct
   type state = {
-    ok_rate : int;
+    ok_rate : float;
     green : bool;
     red : bool;
   }
@@ -52,7 +71,7 @@ module MarkovCompressor = struct
   let observe () =
     let is_blocked ip =
       let open System in
-      BlockedSet.exists (String.equal ip) (blocked_ips ())
+      BlockedSet.mem ip (blocked_ips ())
     in
     {
       ok_rate = System.ok_rate ();
@@ -65,13 +84,17 @@ module Reward = struct
   type state = MarkovCompressor.state
   type t = int
 
-  (** A reward that is a positive leading indicator. [1] if and only if the OK response rate is at 20 Responses Per Second (RPS), which is equal to the query/request rate (e.g. negligible number of dropped requests). *)
+  (** A reward that is a positive leading indicator. [1] if and only if the OK response rate is greater than the acceptable fractionof the perfect/expected value, which is equal to the query/request rate (e.g. negligible number of dropped requests). *)
   let fn state =
     let open MarkovCompressor in
-    if state.ok_rate = System.request_rate then 1 else 0
+    if state.ok_rate > Blue.Cli.acceptable_fraction () *. System.request_rate
+    then 1
+    else 0
 end
 
 module Policy = struct
+  open Blue
+
   type reward = Reward.t
   type state = MarkovCompressor.state
   type observer = unit -> state
@@ -94,10 +117,13 @@ module Policy = struct
       if first_slot != 0 then first_slot else Bool.compare a.red b.red
   end)
 
-  type t = int RewardTable.t
-  (** [Policy.t] is a table of cumulative historic reward for each of the 4 possible configurations of [config]. *)
+  type t = {
+    hist_reward : int RewardTable.t;
+    n_steps : int;
+  }
+  (** [Policy.t] includes a table of cumulative historic reward for each of the 4 possible configurations of [config], and record of the total number of observations seen by the policy ([n_steps], used determine when exploitation should be favoured over exploration). *)
 
-  let init () = RewardTable.empty
+  let init () = { hist_reward = RewardTable.empty; n_steps = 0 }
   let init_observer = MarkovCompressor.observe
 
   type inference = {
@@ -106,19 +132,22 @@ module Policy = struct
     policy : t;
   }
 
-  (** [push (config,reward) policy] pushes the [(config, reward)] instance onto the table of cumulative historic rewards. *)
-  let push (config, reward) table =
-    RewardTable.update config
-      (fun prev ->
-        match prev with
-        | None -> Some reward
-        | Some sum -> Some (sum + reward))
-      table
+  (** [push (config,reward) policy] pushes the [(config, reward)] instance onto the table of cumulative historic rewards, and increments the counter for the total number of observations seen by the policy. *)
+  let push (config, reward) { hist_reward; n_steps } =
+    let hist_reward' =
+      RewardTable.update config
+        (fun prev ->
+          match prev with
+          | None -> Some reward
+          | Some sum -> Some (sum + reward))
+        hist_reward
+    in
+    { hist_reward = hist_reward'; n_steps = n_steps + 1 }
 
   let most_valuable policy =
     RewardTable.fold
       (fun k v (k_max, v_max) -> if v > v_max then (k, v) else (k_max, v_max))
-      policy
+      policy.hist_reward
       ({ green = true; red = true }, Int.min_int)
 
   let infer policy (state, reward) =
@@ -127,7 +156,7 @@ module Policy = struct
     let goal, _ = most_valuable policy in
     let chosen_eff =
       (* Exploration. *)
-      if RewardTable.cardinal policy < 4 then System.random_eff ()
+      if policy'.n_steps < Cli.n_exploration_steps () then System.random_eff ()
       else if (* Exploitation. *)
               config = goal then System.(Wait)
       else if config.green = goal.green then System.(ToggleRed)
@@ -138,7 +167,7 @@ module Policy = struct
       action;
       observer =
         (fun () ->
-          Unix.sleep 5;
+          Unix.sleepf @@ Cli.obs_time_delay ();
           MarkovCompressor.observe ());
       policy = policy';
     }
