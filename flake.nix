@@ -12,7 +12,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         on = opam-nix.lib.${system};
         scope =
-          on.buildDuneProject' { } package ./. { ocaml-base-compiler = "*"; };
+          on.buildDuneProject { } package ./. { ocaml-base-compiler = "*"; };
       in {
         legacyPackages = scope;
 
