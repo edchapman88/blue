@@ -13,6 +13,7 @@ depends: [
   "odoc" {with-doc}
   "domainslib"
   "lwt"
+  "markov"
 ]
 build: [
   ["dune" "subst"] {dev}

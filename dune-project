@@ -29,4 +29,5 @@
    (odoc :with-doc)
    domainslib
    lwt 
+   markov
    ))
