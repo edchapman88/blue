@@ -16,6 +16,6 @@
       in {
         legacyPackages = scope;
 
-        packages.default = self.legacyPackages.${system}.${package};
+        packages = self.legacyPackages.${system};
       });
 }
