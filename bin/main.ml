@@ -9,6 +9,8 @@
    3. A [Markov.Agent.RLPolicyType] module.
 *)
 
+let () = Blue.Cli.arg_parse ()
+
 module System = struct
   open Blue
 

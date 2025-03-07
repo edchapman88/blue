@@ -1,7 +1,6 @@
 open Domainslib
 
 let serial addr () =
-  print_endline "serial fn";
   match addr with
   | Unix.ADDR_INET _ -> failwith "unreachable"
   | Unix.ADDR_UNIX dev -> Serial.read dev
