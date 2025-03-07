@@ -12,13 +12,9 @@
         pkgs = nixpkgs.legacyPackages.${system};
         on = opam-nix.lib.${system};
         scope =
-          on.buildDuneProject { } package ./. { ocaml-base-compiler = "*"; };
-        overlay = final: prev:
-          {
-            # Your overrides go here
-          };
+          on.buildDuneProject' { } package ./. { ocaml-base-compiler = "*"; };
       in {
-        legacyPackages = scope.overrideScope' overlay;
+        legacyPackages = scope;
 
         packages.default = self.legacyPackages.${system}.${package};
       });
