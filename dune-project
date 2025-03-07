@@ -30,4 +30,6 @@
    domainslib
    lwt 
    markov
+   core
+   re
    ))
