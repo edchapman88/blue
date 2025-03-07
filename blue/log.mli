@@ -1,0 +1,2 @@
+val write_msg : string -> unit
+(** [write_msg msg] writes [msg] to the end of a log file, along with a Unix timestamp in nano-seconds. The file path is optionally configured over the CLI. If no path is configured, [write_msg] returns early. [write_msg] is expected to maintain an open file descriptor to the log file for the duration of the program. Changes to the path variable maintained in the [Cli] module during the runtime of the program are not handled gracefully. *)

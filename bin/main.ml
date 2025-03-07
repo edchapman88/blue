@@ -40,6 +40,12 @@ module System = struct
     | ToggleGreen
     | ToggleRed
 
+  let string_of_eff e =
+    match e with
+    | Wait -> "Wait"
+    | ToggleGreen -> "ToggleGreen"
+    | ToggleRed -> "ToggleRed"
+
   let random_eff () =
     match Random.int 3 with
     | 0 -> Wait
@@ -83,6 +89,11 @@ end
 module Reward = struct
   type state = MarkovCompressor.state
   type t = int
+
+  let string_of_state_reward ((s, reward) : state * t) =
+    Printf.sprintf
+      "{\"ok_rate\":\"%.2f\",\"green_blocked\":%B,\"red_blocked\":%B,\"reward\":%d}"
+      s.ok_rate s.green s.red reward
 
   (** A reward that is a positive leading indicator. [1] if and only if the OK response rate is greater than the acceptable fractionof the perfect/expected value, which is equal to the query/request rate (e.g. negligible number of dropped requests). *)
   let fn state =
@@ -151,6 +162,9 @@ module Policy = struct
       ({ green = true; red = true }, Int.min_int)
 
   let infer policy (state, reward) =
+    (* Log state and reward. *)
+    Log.write_msg @@ Reward.string_of_state_reward (state, reward);
+
     let config = config_of_state state in
     let policy' = push (config, reward) policy in
     let goal, _ = most_valuable policy in
@@ -162,6 +176,10 @@ module Policy = struct
       else if config.green = goal.green then System.(ToggleRed)
       else System.(ToggleGreen)
     in
+
+    (* Log chosen effect. *)
+    Log.write_msg @@ System.string_of_eff chosen_eff;
+
     let action () = System.exec_eff chosen_eff in
     {
       action;
