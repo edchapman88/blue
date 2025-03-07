@@ -9,7 +9,7 @@ homepage: "https://github.com/edchapman88/blue"
 bug-reports: "https://github.com/edchapman88/blue/issues"
 depends: [
   "ocaml" {>= "5.0"}
-  "dune" {>= "3.16"}
+  "dune" {>= "3.7"}
   "odoc" {with-doc}
   "domainslib"
   "lwt"
