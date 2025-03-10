@@ -23,4 +23,5 @@ let rec write_msg msg =
           write_msg msg
       | Some chan ->
           let open Core.Time_ns in
+          print_endline msg;
           Printf.fprintf chan "[%d] %s%!" (to_int_ns_since_epoch (now ())) msg)

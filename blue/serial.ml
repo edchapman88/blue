@@ -19,29 +19,23 @@ let set_baud fd rate =
       c_clocal = true;
     }
 
-let serial_conn_in = ref None
-let serial_conn_out = ref None
+let serial_conn = ref None
 
 let fd_of_dev device =
   let config = { baud = 115200; port = device } in
-  let fd = Unix.openfile config.port [ Unix.O_RDWR; Unix.O_NONBLOCK ] 0o000 in
+  let fd = Unix.openfile config.port [ Unix.O_RDONLY; O_NONBLOCK ] 0o000 in
   set_baud fd config.baud;
   fd
 
 let init device =
   let fd = fd_of_dev device in
-  serial_conn_in := Some (Unix.in_channel_of_descr fd);
-  serial_conn_out := Some (Unix.out_channel_of_descr fd)
+  serial_conn := Some (Unix.in_channel_of_descr fd)
 
 let read device =
-  if Option.is_none !serial_conn_in then init device;
-  let chan = Option.get !serial_conn_in in
+  if Option.is_none !serial_conn then init device;
+  let chan = Option.get !serial_conn in
   let buf = Bytes.create 1024 in
-  let n_read = In_channel.input chan buf 0 1023 in
+  let n_read =
+    try In_channel.input chan buf 0 1023 with Sys_blocked_io -> 0
+  in
   if n_read = 0 then None else Some (Bytes.sub buf 0 n_read)
-
-let write device str =
-  if Option.is_none !serial_conn_out then init device;
-  let chan = Option.get !serial_conn_out in
-  let buf = Bytes.of_string str in
-  Out_channel.output chan buf 0 (Bytes.length buf)
