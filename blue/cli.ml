@@ -81,6 +81,8 @@ let response_signal_addr () = Option.get !_parsed_response_signal_addr
 let rolling_window_secs () = !_rolling_window_secs
 
 let arg_parse () =
+  let parse_positional_args _ = () in
+  Arg.parse speclist parse_positional_args usage_msg;
   let raw_addr = !_response_signal_addr in
   if String.contains raw_addr ':' then
     try
