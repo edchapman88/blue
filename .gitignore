@@ -27,3 +27,6 @@ setup.log
 
 # Local OPAM switch
 _opam/
+
+# log files written by the program at the conventional path
+blue_logs/
