@@ -60,7 +60,8 @@ let speclist =
        which 1's and 0's are sent to indicate successful and failed responses \
        received by the client. Defaults to '/dev/ttyUSB0'. If a filesystem \
        address, a serial reader is initialised; if a network address in the \
-       form '172.0.1.1:8081', a UDP reader is initialised." );
+       form '172.0.1.3:8081', a UDP reader is initialised. In the UDP case, \
+       the IP address should be the IP *used by the sender*." );
     ( "-s",
       Arg.Set_float _rolling_window_secs,
       ": Set the length of the rolling window used to evaluate the average OK \
