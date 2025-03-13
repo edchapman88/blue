@@ -10,6 +10,10 @@ let udp_sock = ref None
 let init_udp addr =
   let fd = Unix.socket PF_INET SOCK_DGRAM 0 in
   Unix.bind fd addr;
+  (match addr with
+  | Unix.ADDR_INET (ip, port) ->
+      Printf.printf "bound to %s, port %d" (Unix.string_of_inet_addr ip) port
+  | _ -> print_endline "didn't bind to INET addr!");
   udp_sock := Some fd
 
 let udp addr () =
@@ -17,7 +21,12 @@ let udp addr () =
   let sock = Option.get !udp_sock in
   let buf_len = 1 in
   let buf = Bytes.create buf_len in
-  let len, _src = Unix.recvfrom sock buf 0 buf_len [] in
+  let len, _src =
+    try Unix.recvfrom sock buf 0 buf_len []
+    with _e ->
+      print_endline "unhandled exception!";
+      (0, addr)
+  in
   if len = 0 then None else Some buf
 
 let all_received chan =
