@@ -1,0 +1,43 @@
+{0 [blue]}
+{2 Defending {{:https://github.com/edchapman88/r3ace}R{^ 3}ACE}: Defending {e Replicable} and {i Reproducible} {e Real-World} Autonomous Cyber Environments}
+
+{3 [blue] paves the way to applied online learning on {e real-world}, {e continuous-time}, {e concurrently-running} systems by {b bridging the gap between real systems and MDP-assuming online learning agents}.}
+
+{1 Take me to the docs}
+Blue is factored into two packages:
+- {{!/blue/page-index}blue} - the executable [blue] program, with a library of helper modules
+- {{!/markov/page-index}markov} - a library defining the reusable abstract software interface that [blue] implements
+
+{1 What is {{:https://github.com/edchapman88/r3ace}R{^ 3}ACE}?}
+The {{:https://github.com/edchapman88/r3ace}{b R{^ 3}ACE}} {b project makes publically accessible a real-world cyber environment} that models a {i minimum viable cyber system}.
+
+{b R{^ 3}ACE is a real computer network} (cyber infrastructure) with a cyber defence software program, the [blue] program running on one of the machines.
+
+{1 What does the [blue] program do?}
++ Fetches information from the cyber system (the surrounding computer network).
++ Uses a policy to decide what (if any) action to take.
++ Executes this action, causing a side effect in the cyber system (e.g. an IP address is added to a block list).
+
+The above design for a program should infact be useful for the application of Autonomous Cyber Defence (ACD) to {e many} realistic, or indeed real-world cyber systems. As such, we have {b designed and documented a reusable abstract software interface to generalise over different cyber systems and policies} - the {{!/markov/page-index}markov} library.
+
+{1 What is a reusable software interface?}
+The {{!/markov/page-index}markov} library defines several {e module types}, these can be thought of blueprints or specifications for software modules. It is up to the implementer of the interface to write software that conforms to these type specifications.
+
+For example, the specification (or {e interface}) for a {{!Markov.Agent.RewardType}Reward} module, defining rewards for online learning agents:
+{[
+(** A reward function which is a map from a [state] to a [Reward.t option]. *)
+module type RewardType = sig
+  type t
+  type state
+
+  val fn : state -> t
+  (** [Reward.fn s] is the [Reward.t] associated with the MDP state [s]. *)
+end
+]}
+
+There are many possible implementations for this module - what's fixed is how this module interacts with other modules: the types exchanged at the boundary (the {e interface}) are defined explicitly, and can be depended on.
+
+The {{!/markov/page-index}markov} library defines how several modules (once implemented) may be combined (via a {{:https://ocaml.org/docs/functors}functor}) to compose a useful piece of software that behaves in a specific way - in the case of the {{!/markov/page-index}markov} library, observe and affect a surrounding cyber system.
+
+{1 How could {{!/markov/page-index}markov} be used in a different project?}
+The [blue] program {e implements} the {{!Markov.Agent}Agent} interface exposed by the markov library, so looking at this implementation in more detail is a good place to start. A different implementation could serve a different purpose, for example an agent that plays a video game.

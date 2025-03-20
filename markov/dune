@@ -1,5 +1,3 @@
 (library
  (name markov)
  (public_name markov))
-(documentation
-  (package markov))

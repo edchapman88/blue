@@ -11,6 +11,9 @@
 # ocamlbuild working directory
 _build/
 
+# odoc html output directory
+_html/
+
 # ocamlbuild targets
 *.byte
 *.native
