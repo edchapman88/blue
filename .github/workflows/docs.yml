@@ -35,11 +35,11 @@ jobs:
         with:
           ocaml-compiler: 5
 
-      - name: Install dependencies
-        run: opam install . --deps-only --with-doc
+      - name: Install
+        run: opam install . --with-doc
 
       - name: Build documentation
-        run: opam exec -- dune build @doc
+        run: odoc_driver blue markov --remap --index-mld docs/main_index.mld
 
       - name: Set-up Pages
         uses: actions/configure-pages@v5
@@ -47,7 +47,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _build/default/_doc/_html
+          path: _html
 
       - name: Deploy odoc to GitHub Pages
         id: deployment
