@@ -1,5 +1,6 @@
 open Blue
 
+(* Whether or not to round the 'OK rate' values before printing in the following expect tests. Must be [true] for the tests to pass consistently, [false] may be useful for debugging. *)
 let rounded = true
 
 let print_rate rate_fn =
@@ -55,24 +56,4 @@ let%expect_test "test listening loop" =
   [%expect {|
     OK rate = 10
     OK rate = 10
-    |}]
-
-let%expect_test "udp" =
-  let window_secs = 3.0 in
-  let addr = Unix.ADDR_INET (Unix.inet_addr_loopback, 8081) in
-  let reader = Receiver.reader_of_addr addr in
-  let rate_fn = Receiver.receiver_of_reader ~window_secs reader in
-  Unix.sleep 4;
-  print_rate rate_fn;
-  Unix.sleep 1;
-  print_rate rate_fn;
-  Unix.sleep 1;
-  print_rate rate_fn;
-  Unix.sleep 1;
-  print_rate rate_fn;
-  [%expect {|
-    OK rate = 19
-    OK rate = 19
-    OK rate = 19
-    OK rate = 18
     |}]

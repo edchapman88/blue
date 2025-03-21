@@ -1,5 +1,11 @@
 (library
- (name markov_test)
+ (name test_blue)
  (libraries markov unix blue)
- (inline_tests)
+ (inline_tests
+   (deps %{bin:nft}))
  (preprocess (pps ppx_inline_test ppx_expect)))
+
+(env
+  (_
+   (binaries
+     (mock_nft/nft.exe as nft))))

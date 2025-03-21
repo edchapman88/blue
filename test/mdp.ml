@@ -1,3 +1,5 @@
+(* Create a mock 'cyber system' and apply an online learner that implements [Markov.Agent]. By seeding the [Random] module, the tests are deterministic. *)
+
 open! Markov
 
 type coin =
@@ -16,6 +18,7 @@ let random_eff () =
 (** Initially set [Heads] as the goal state. *)
 let game_goal = ref Heads
 
+(* [System] models a fair coin in a box, exposing a function [System.exec_effect] that either flips the coin for a [Flip] action, or does nothing for a [Wait] action. [System.observe] returns whether the coin is currently showing [Heads] or [Tails]. *)
 module System = struct
   let state = ref Heads
   let steps = ref 0
@@ -60,6 +63,7 @@ module Reward = struct
   let fn state = if state = !game_goal then 1 else 0
 end
 
+(* A count-based policy, implementing [Markov.Agent.RLPolicyType]. After a fixed period of taking random actions (exploration), the policy evaluates the [System.state] that achieved the highest cumulative reward, [Flip]s until the system is in that state, and then [Wait]s. *)
 module CountBased = struct
   type reward = Reward.t
   type state = MarkovCompressor.state
