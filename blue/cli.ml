@@ -9,6 +9,21 @@ let usage_msg =
    /dev/ttyUSB0 -s 3.0 \n\n\
   \ Options:"
 
+let parse_addr raw_addr =
+  if String.contains raw_addr ':' then
+    try
+      match String.split_on_char ':' raw_addr with
+      | [ ip; port ] ->
+          Unix.ADDR_INET (Unix.inet_addr_of_string ip, int_of_string port)
+      | _ -> raise @@ Failure "Network addresses must have exactly one ':'."
+    with Failure msg ->
+      failwith
+      @@ Printf.sprintf
+           "Failed parsing response signal address: '%s'. Accepted formats are \
+            e.g. '/dev/ttyUSB0' or '172.0.1.1:8081'. %s"
+           raw_addr msg
+  else Unix.ADDR_UNIX raw_addr
+
 let _log_path = ref ""
 let _n_exploration_steps = ref 300
 let _obs_time_delay = ref 5.0
@@ -17,7 +32,7 @@ let _request_interval = ref 1.
 let _green_ip = ref "172.0.0.2"
 let _red_ip = ref "172.0.0.3"
 let _response_signal_addr = ref "/dev/ttyUSB0"
-let _parsed_response_signal_addr = ref None
+let _parsed_response_signal_addr = ref (parse_addr !_response_signal_addr)
 let _rolling_window_secs = ref 3.0
 
 let speclist =
@@ -25,8 +40,8 @@ let speclist =
     ( "-l",
       Arg.Set_string _log_path,
       ": Optionally write a log file in the specified directory with \
-       information about the sequence of states observed and actions taken.\n"
-    );
+       information about the sequence of states observed and actions taken. If \
+       no log file is specified, the information is written to stdout.\n" );
     ( "-e",
       Arg.Set_int _n_exploration_steps,
       ": Set the number of observations used by the policy for exploration, \
@@ -78,25 +93,11 @@ let acceptable_fraction () = !_acceptable_fraction
 let request_interval () = !_request_interval
 let green_ip () = !_green_ip
 let red_ip () = !_red_ip
-let response_signal_addr () = Option.get !_parsed_response_signal_addr
+let response_signal_addr () = !_parsed_response_signal_addr
 let rolling_window_secs () = !_rolling_window_secs
 
 let arg_parse () =
   let parse_positional_args _ = () in
   Arg.parse speclist parse_positional_args usage_msg;
   let raw_addr = !_response_signal_addr in
-  if String.contains raw_addr ':' then
-    try
-      match String.split_on_char ':' raw_addr with
-      | [ ip; port ] ->
-          _parsed_response_signal_addr :=
-            Some
-              (Unix.ADDR_INET (Unix.inet_addr_of_string ip, int_of_string port))
-      | _ -> raise @@ Failure "Network addresses must have exactly one ':'."
-    with Failure msg ->
-      failwith
-      @@ Printf.sprintf
-           "Failed parsing response signal address: '%s'. Accepted formats are \
-            e.g. '/dev/ttyUSB0' or '172.0.1.1:8081'. %s"
-           raw_addr msg
-  else _parsed_response_signal_addr := Some (Unix.ADDR_UNIX raw_addr)
+  _parsed_response_signal_addr := parse_addr raw_addr

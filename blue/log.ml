@@ -15,7 +15,7 @@ let init_oc dir_path = oc := Some (file_of_dir dir_path)
 
 let rec write_msg msg =
   match Cli.log_path () with
-  | None -> ()
+  | None -> print_endline msg
   | Some path -> (
       match !oc with
       | None ->
@@ -23,6 +23,5 @@ let rec write_msg msg =
           write_msg msg
       | Some chan ->
           let open Core.Time_ns in
-          print_endline msg;
           Printf.fprintf chan "[%d] %s\n%!" (to_int_ns_since_epoch (now ())) msg
       )
