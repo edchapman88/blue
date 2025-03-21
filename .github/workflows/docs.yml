@@ -39,7 +39,7 @@ jobs:
         run: opam install . --with-doc
 
       - name: Build documentation
-        run: odoc_driver blue markov --remap --index-mld docs/main_index.mld
+        run: opam exec -- odoc_driver blue markov --remap --index-mld docs/main_index.mld
 
       - name: Set-up Pages
         uses: actions/configure-pages@v5
