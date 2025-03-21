@@ -19,13 +19,13 @@ let mock_sender ~rate msg_chan =
   in
   loop ()
 
-(* Spawn a domain in which [mock_sender] will run. The channel [msg_chan] receives mock data at a constant rate and is passed to [Receiver.ok_rate] to return a 'getter' for the average rate. *)
+(* Spawn a domain in which [mock_sender] will run. The channel [msg_chan] receives mock data at a constant rate and is passed to [Receiver.receiver_of_arrivals] to return a 'getter' for the average rate. *)
 let mock_receiver ~window_secs ~send_rate =
   let msg_chan = Domainslib.Chan.make_unbounded () in
   let _mock_sender =
     Domain.spawn (fun () -> mock_sender ~rate:send_rate msg_chan)
   in
-  Blue.Receiver.ok_rate window_secs msg_chan
+  Blue.Receiver.receiver_of_arrivals ~window_secs msg_chan
 
 let%expect_test "test rate evaluation" =
   (* A mock serial receiver evaluating an average OK rate with a look-back period of 4 seconds. The mock data has a constant OK rate of 10 per second. Hence the mock receiver should evaluate an average OK rate of 10. *)

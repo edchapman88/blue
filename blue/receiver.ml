@@ -1,25 +1,9 @@
 open Domainslib
 
-let serial addr () =
-  match addr with
-  | Unix.ADDR_INET _ -> failwith "unreachable"
-  | Unix.ADDR_UNIX dev -> Serial.read dev
+type t = unit -> float
+type arrival = int * float
 
-let udp_sock = ref None
-
-let init_udp addr =
-  let fd = Unix.socket PF_INET SOCK_DGRAM 0 in
-  Unix.bind fd addr;
-  udp_sock := Some fd
-
-let udp addr () =
-  if Option.is_none !udp_sock then init_udp addr;
-  let sock = Option.get !udp_sock in
-  let buf_len = 1 in
-  let buf = Bytes.create buf_len in
-  let len, _src = Unix.recvfrom sock buf 0 buf_len [] in
-  if len = 0 then None else Some buf
-
+(* [all_received chan] polls [chan] in a tight loop until there are no messages remaining in the channel buffer, then returns the messages as a [list]. *)
 let all_received chan =
   let rec aux acc =
     match Chan.recv_poll chan with
@@ -28,26 +12,29 @@ let all_received chan =
   in
   aux []
 
-let relevant = ref []
-
-let ok_rate window_secs msg_chan () =
-  let start_win = Unix.gettimeofday () -. window_secs in
-  let buf = !relevant @ all_received msg_chan in
-  let relevant', num_ok =
-    List.fold_left
-      (fun (rel, count) (n_at_t, t) ->
-        if t < start_win then (rel, count)
-        else ((n_at_t, t) :: rel, count + n_at_t))
-      ([], 0) buf
-  in
-  relevant := List.rev relevant';
-  float_of_int num_ok /. window_secs
+let receiver_of_arrivals ~window_secs msg_chan =
+  (* Function-encapsulated state, a list of {e relevant} [arrival]s. [arrival]s with a [timestamp < (now - window_secs)] are no longer relevant for calculating averages over the last [window_secs] seconds, so are dropped from the list.  *)
+  let relevant = ref [] in
+  fun () ->
+    let start_win = Unix.gettimeofday () -. window_secs in
+    let buf = !relevant @ all_received msg_chan in
+    let relevant', num_ok =
+      List.fold_left
+        (fun (rel, count) (n_at_t, t) ->
+          if t < start_win then (rel, count)
+          else ((n_at_t, t) :: rel, count + n_at_t))
+        ([], 0) buf
+    in
+    relevant := List.rev relevant';
+    float_of_int num_ok /. window_secs
 
 let reader_of_addr addr =
+  let open Reader in
   match addr with
-  | Unix.ADDR_UNIX _ -> serial addr
-  | Unix.ADDR_INET _ -> udp addr
+  | Unix.ADDR_UNIX addr -> Serial.reader_of_addr addr
+  | Unix.ADDR_INET _ -> Udp.reader_of_addr addr
 
+(* [listen ~reader chan] commences a tight listening loop within which bytes returned by the reader are filtered for 1's, timestamped, and written to the channel [chan] as [arrival]s. *)
 let listen ~reader chan =
   let rec loop () =
     match reader () with
@@ -67,4 +54,4 @@ let listen ~reader chan =
 let receiver_of_reader ~window_secs reader =
   let msg_chan = Chan.make_unbounded () in
   let _listener = Domain.spawn (fun () -> listen ~reader msg_chan) in
-  ok_rate window_secs msg_chan
+  receiver_of_arrivals ~window_secs msg_chan
