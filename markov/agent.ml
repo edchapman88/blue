@@ -40,6 +40,7 @@ end
 module type S = sig
   type policy
 
+  val init_policy : unit -> policy
   val act : policy -> 'a
 end
 
@@ -52,6 +53,8 @@ module Make
                 with type reward = Reward.t) =
 struct
   type policy = Policy.t
+
+  let init_policy () = Policy.init ()
 
   let act policy =
     (* Define the inner recursive loop. *)

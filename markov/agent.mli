@@ -55,6 +55,9 @@ module type S = sig
   type policy
   (** The Agent's policy. As argument to the [act] function, the policy determines how the Agent i) obtains the state of the MDP, ii) decides what action to take, and iii) how the action is executed on the process. *)
 
+  val init_policy : unit -> policy
+  (** Initialise the agent's policy. *)
+
   val act : policy -> 'a
   (** [act policy] is an infinite (tail-recursive) loop modelling an MDP process. Each iteration of the loop involves i) measuring the state of the MDP, ii) infering an action to take, iii) infering a method to next measure the state of the MDP, iv) executing the action, and v) repeating from i). *)
 end
