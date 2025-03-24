@@ -14,10 +14,20 @@ let res_sig () =
 
 let request_rate () = 1. /. Cli.request_interval ()
 
-let ok_rate () =
-  let res_sig = res_sig () in
-  Receiver.(receiver_of_reader @@ reader_of_addr @@ res_sig.channel)
-    ~window_secs:res_sig.rolling_window_secs ()
+let ok_rate =
+  (* Maintain a stateful receiver that is initialised at runtime (after the Cli arguments have been parsed). *)
+  let receiver = ref None in
+  fun () ->
+    match !receiver with
+    | None ->
+        let res_sig = res_sig () in
+        let rcv =
+          Receiver.(receiver_of_reader @@ reader_of_addr @@ res_sig.channel)
+            ~window_secs:res_sig.rolling_window_secs
+        in
+        receiver := Some rcv;
+        rcv ()
+    | Some rcv -> rcv ()
 
 module BlockedSet = Blocked.BlockedSet
 
