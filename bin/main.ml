@@ -8,9 +8,8 @@
 *)
 
 open Blue
-
-let () = Cli.arg_parse ()
-
 module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (CountBasedPolicy)
 
-let () = Agent.act (CountBasedPolicy.init ())
+let () =
+  Cli.arg_parse ();
+  Agent.act (CountBasedPolicy.init ())
