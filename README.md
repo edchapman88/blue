@@ -7,5 +7,5 @@ Part of the [**R<sup>3</sup>ACE**](https://github.com/edchapman88/r3ace) project
 2. `markov` - a library defining the reusable abstract software interface (`blue` is an implementer of this interface)
 
 ## Find Out More
-- Get started training and evaluating agents in _Replicable_ and _Reproducible Real-World_ Autonomous Cyber Environments with [**R<sup>3</sup>ACE**](https://github.com/edchapman88/r3ace).
-- I know about [**R<sup>3</sup>ACE**](https://github.com/edchapman88/r3ace), take me to the [**docs**](https://edchapman88.github.io/blue/) for `blue` and `markov`.
+- Get started **training and evaluating agents** in _Replicable_ and _Reproducible Real-World_ Autonomous Cyber Environments with [**R<sup>3</sup>ACE**](https://github.com/edchapman88/r3ace).
+- I know about [_R<sup>3</sup>ACE_](https://github.com/edchapman88/r3ace), **take me to the [docs](https://edchapman88.github.io/blue/) website for `blue` and `markov`**.
