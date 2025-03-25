@@ -6,7 +6,7 @@
 {1 Take me to the docs}
 Blue is factored into two packages:
 - {{!/blue/page-index}blue} - the executable [blue] program, with a library of helper modules
-- {{!/markov/page-index}markov} - a library defining the reusable abstract software interface ([blue] is an implementer of this interface)
+- {{!/markov/page-index}markov} - a library defining a reusable abstract software interface for online learning agents that interact with real systems ([blue] is an implementer of this interface)
 
 {1 What is {{:https://github.com/edchapman88/r3ace}R{^ 3}ACE}?}
 The {{:https://github.com/edchapman88/r3ace}{b R{^ 3}ACE}} {b project makes publically accessible a real-world cyber environment} that models a {i minimum viable cyber system}.

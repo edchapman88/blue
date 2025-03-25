@@ -1,1 +1,10 @@
 {0 The [markov] library}
+
+[markov] defines a {e reusable} abstract software interface for {b online learning agents} that interact with {b real systems}.
+
+Many existing applications of online learning agents to problems, both inside and outside of Autonomous Cyber Defence (ACD), involve two significant constraints:
++ The agent interacts with a {b discrete-time} system, representable by a {e state machine}.
++ {b Turn-based} interactions between the agent and it's environment.
+
+{e Real-world} systems are typically {e continuous-time} and {e concurrently-running}. [markov] presents a simple model that generalises over the two constraints above, to provide a {e reusable} software interface for the application of online learning agents to {e continuous-time}, {e concurrently-running} systems. 
+
