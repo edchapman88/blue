@@ -1,0 +1,8 @@
+(documentation
+  (package markov))
+
+(install
+  (section doc)
+  (files
+    (policy-steps.png as odoc-pages/policy-steps.png))
+  (package markov))
