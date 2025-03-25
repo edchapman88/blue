@@ -1,4 +1,6 @@
-(** Exposes the functor [Agent.Make] **)
+(** Exposes the functor [Agent.Make] which returns an [Agent.S] module that is parameterised by the provided implementations of [Agent.MarkovCompressorType], [Agent.RewardType] and [Agent.RLPolicyType].
+
+[Agent.S.act initial_policy] commences an infinite loop using the policy to take actions and produce {e observers} (functions returning a {e state}). When the observer resolves to a state, the loop repeats. *)
 
 (** Handle the continuous-time stream of information from a system and compress the information into a Markovian state representation such that the sequence of states returned by sequential calls to [observe] have the Markov property. *)
 module type MarkovCompressorType = sig

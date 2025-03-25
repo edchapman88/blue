@@ -58,4 +58,8 @@ kicks off an infinite loop modelling an Markov Decision Process (MDP). Each iter
 + infering a method to next measure the state of the MDP (in other words producing an {e observer})
 + executing the action
 
-{b The implementation of this loop is included in the [markov] library.} It is found in {{!/markov/src/agent.ml.html#module-Make}the implementation} of the [Agent.Make] functor.
+{b The implementation of this loop is included in the [markov] library.} It is found in the implementation of the [Agent.Make] functor.
+
+{1 Reference Implementation}
+The {{!/blue/page-index}blue} library implements the [Markov] interfaces (albeit with a simple implementation).
+
