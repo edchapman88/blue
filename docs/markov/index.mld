@@ -4,7 +4,45 @@
 
 Many existing applications of online learning agents to problems, both inside and outside of Autonomous Cyber Defence (ACD), involve two significant constraints:
 + The agent interacts with a {b discrete-time} system, representable by a {e state machine}.
-+ {b Turn-based} interactions between the agent and it's environment.
++ The interactions between the agent and it's environment are {b Turn-based}.
 
-{e Real-world} systems are typically {e continuous-time} and {e concurrently-running}. [markov] presents a simple model that generalises over the two constraints above, to provide a {e reusable} software interface for the application of online learning agents to {e continuous-time}, {e concurrently-running} systems. 
+{b Real-world} systems are typically {b continuous-time} and {b concurrently-running}. [markov] presents a simple model that generalises over the two constraints above, to provide a {e reusable} software interface for the application of online learning agents to continuous-time, concurrently-running systems. 
+
+{1 Design}
+The digraph below shows how an agent's policy consumes a {e state}, returning:
++ A {b new policy}. In the case where this policy is different from the previous policy, the agent is {e 'training'}.
++ An {b action} to be executed in the surrounding system.
++ An {b 'observer'}: a function that will return a new {e state}.
+
+Requiring that the policy return an {e observer} introduces a helpful {b generalisation to continuous-time systems} - one in which the policy itself controls {e when} observations occur, and feasibly {e what} they consist of.
+
+E.g., in the context of cyber defence, in response to a high threat state a policy might produce an {e observer} function that returns quickly with information that is critical to that specific threat. Alternatively, in response to a low threat state a policy might produce an observer function returning after some longer delay, perhaps with a state with a broader set of information.
+
+{A directed graph showing a policy doing inference on a state to return an action, an observer and a new policy.!figures/policy-steps.png}
+
+In the application of online learning to {e real} systems, resource bounds will influence the optimal behaviour of the agent. The {e observer} model allows the policy itself to control and optimise over the challenges posed by resource constraints.
+
+{1 The {{!Markov.Agent}[Agent]} module}
+The [Agent] module exposes a {{:https://ocaml.org/docs/functors}functor}, {{!Markov.Agent.Make}[Agent.Make]}, that when called will return a module of type {{!Markov.Agent.S}[Agent.S]}.
+
+Example usage:
+{[
+module MarkovCompressor = struct
+(* Your implementation here *)
+...
+end
+module Reward = struct
+(* Your implementation here *)
+...
+end
+module Policy = struct
+(* Your implementation here *)
+...
+end
+
+module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (Policy)
+
+let () =
+  Agent.act (Agent.init_policy ())
+]}
 
