@@ -1,3 +1,5 @@
+(** Exposes the functor [Agent.Make] **)
+
 (** Handle the continuous-time stream of information from a system and compress the information into a Markovian state representation such that the sequence of states returned by sequential calls to [observe] have the Markov property. *)
 module type MarkovCompressorType = sig
   type state

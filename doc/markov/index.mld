@@ -16,26 +16,29 @@ The digraph below shows how an agent's policy consumes a {e state}, returning:
 
 Requiring that the policy return an {e observer} introduces a helpful {b generalisation to continuous-time systems} - one in which the policy itself controls {e when} observations occur, and feasibly {e what} they consist of.
 
-E.g., in the context of cyber defence, in response to a high threat state a policy might produce an {e observer} function that returns quickly with information that is critical to that specific threat. Alternatively, in response to a low threat state a policy might produce an observer function returning after some longer delay, perhaps with a state with a broader set of information.
-
 {image!policy-steps.png}
 
-In the application of online learning to {e real} systems, resource bounds will influence the optimal behaviour of the agent. The {e observer} model allows the policy itself to control and optimise over the challenges posed by resource constraints.
+E.g., in the context of cyber defence, consider two scenarios:
++ In response to a {b high threat state} a policy might produce an {e observer} function that returns {b quickly} with information that is critical to that {b specific} threat.
++ Alternatively, in a {b low threat state}, produce an observer function returning after a {b longer delay}, perhaps with a state containing a {b broader} set of information.
+
+In the application of online learning to {e real} systems, {b resource bounds will influence the optimal behaviour of the agent}. The {e observer} model allows the policy itself to control and optimise over the challenges posed by resource constraints.
 
 {1 The {{!Markov.Agent}[Agent]} module}
 The [Agent] module exposes a functor (what is a {{:https://ocaml.org/docs/functors}functor}?), {{!Markov.Agent.Make}[Agent.Make]}, that when called will return a module of type {{!Markov.Agent.S}[Agent.S]}.
 
 Example usage:
 {[
-module MarkovCompressor = struct (* Your implementation here *) ... end
+module MarkovCompressor = struct
+(* Your implementation here *) ...
+end
 
 module Reward = struct
 (* Your implementation here *) ...
 end
 
 module Policy = struct
-(* Your implementation here *)
-...
+(* Your implementation here *) ...
 end
 
 module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (Policy)
@@ -44,3 +47,15 @@ let () =
   Agent.act (Agent.init_policy ())
 ]}
 
+{2 The {{!Markov.Agent.S.act}[Agent.S.act]} loop}
+In the example above,
+{[
+  Agent.act (Agent.init_policy ())
+]}
+kicks off an infinite loop modelling an Markov Decision Process (MDP). Each iteration of the loop involves:
++ measuring the state of the MDP
++ infering an action to take
++ infering a method to next measure the state of the MDP (in other words producing an {e observer})
++ executing the action
+
+{b The implementation of this loop is included in the [markov] library.} It is found in {{!/markov/src/agent.ml.html#module-Make}the implementation} of the [Agent.Make] functor.
