@@ -12,4 +12,4 @@ module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (CountBasedPolicy)
 
 let () =
   Cli.arg_parse ();
-  Agent.act (CountBasedPolicy.init ())
+  Agent.act (Agent.init_policy ())
