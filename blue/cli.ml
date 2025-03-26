@@ -49,13 +49,13 @@ let speclist =
     ( "-t",
       Arg.Set_float _obs_time_delay,
       ": Set the constant time delay between observations in seconds. Defaults \
-       to 5.0 seconds." );
+       to 5.0 seconds.\n" );
     ( "-f",
       Arg.Set_float _acceptable_fraction,
       ": Set the acceptable fraction of OK responses for a positive reward. \
        E.g. for a request rate of 20 RPS (Requests Per Second), give a \
        positive reward for response rates > (0.8 * 20), where 0.8 is the \
-       acceptable fraction. Defaults to '0.8'." );
+       acceptable fraction. Defaults to '0.8'.\n" );
     ( "-i",
       Arg.Set_float _request_interval,
       ": Set the client request interval (delay between requests) in seconds. \
@@ -76,12 +76,12 @@ let speclist =
        received by the client. Defaults to '/dev/ttyUSB0'. If a filesystem \
        address, a serial reader is initialised; if a network address in the \
        form '172.0.1.3:8081', a UDP reader is initialised. In the UDP case, \
-       the IP address should be the IP *used by the sender*." );
+       the IP address should be the IP *used by the sender*.\n" );
     ( "-s",
       Arg.Set_float _rolling_window_secs,
       ": Set the length of the rolling window used to evaluate the average OK \
        response rate indicated by the data received over the out-of-band \
-       channel with the client. Defaults to 3.0." );
+       channel with the client. Defaults to 3.0.\n" );
   ]
 
 let log_path () =

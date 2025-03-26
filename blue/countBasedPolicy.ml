@@ -58,15 +58,21 @@ let infer policy (state, reward) =
   Log.write_msg @@ Reward.string_of_state_reward (state, reward);
 
   let config = config_of_state state in
-  let policy' = push (config, reward) policy in
   let goal, _ = most_valuable policy in
-  let chosen_eff =
+  let chosen_eff, policy' =
     (* Exploration. *)
-    if policy'.n_steps < Cli.n_exploration_steps () then System.random_eff ()
-    else if (* Exploitation. *)
-            config = goal then System.(Wait)
-    else if config.green = goal.green then System.(ToggleRed)
-    else System.(ToggleGreen)
+    if policy.n_steps < Cli.n_exploration_steps () then
+      let policy' = push (config, reward) policy in
+      (System.random_eff (), policy')
+    else
+      (* Exploitation. *)
+      let eff =
+        if config = goal then System.(Wait)
+        else if config.green = goal.green then System.(ToggleRed)
+        else System.(ToggleGreen)
+      in
+      (* Freeze the policy, [policy' = policy]. *)
+      (eff, policy)
   in
 
   (* Log chosen effect. *)

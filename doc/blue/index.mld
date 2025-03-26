@@ -1,1 +1,93 @@
 {0 The [blue] program and library}
+[blue] exposes an executable and a supporting library of helper functions. The executable {b initialises and runs an online learning agent} - repeatedly collecting information from the surrounding cyber system, and selecting actions that are executed, causing effects in the surrounding system.
+
+[blue] is a major component of the {{:https://github.com/edchapman88/r3ace}R{^ 3}ACE} project: {e Replicable} and {e Reproducible} {e Real-World} Autonomous Cyber Environments.
+
+[blue] is also an {b implementation of the {{!/markov/page-index}markov} interface library}. The [markov] library defines a {e reusable} abstract software interface for {b online learning agents} that interact with {b real systems}.
+
+[blue] is implemented the way it is, such that the blue agent is faced with a specific decision problem - outlined as the {{:https://github.com/edchapman88/r3ace/#a-simple-decision-problem}Simple Decision Problem} in the R{^ 3}ACE docs.
+
+{1 Usage}
+The [blue] executable exposes a documented Command Line Interface (CLI). To learn about the CLI options and arguments, run:
+{@bash[
+blue --help
+]}
+
+The output is as follows:
+{@plaintext[
+ Usage:
+ blue [-l <log-dir>] [-e <n-exploration-steps>] [-t <obs-time-delay>] [-f <acceptable-fraction>] [-i <request-interval>] [-g <green-ip>] [-r <red-ip>]  [-a <response-signal-addr>] [-s <rolling-window-secs>]
+
+ Example:
+ blue -l /home/blue/blue_logs -i 0.05 -g 172.0.0.2 -r 172.0.0.3 -a /dev/ttyUSB0 -s 3.0
+
+ Options:
+  -l : Optionally write a log file in the specified directory with information about the sequence of states observed and actions taken. If no log file is specified, the information is written to stdout.
+
+  -e : Set the number of observations used by the policy for exploration, after which actions are selected for exploitation. Defaults to 300.
+
+  -t : Set the constant time delay between observations in seconds. Defaults to 5.0 seconds.
+
+  -f : Set the acceptable fraction of OK responses for a positive reward. E.g. for a request rate of 20 RPS (Requests Per Second), give a positive reward for response rates > (0.8 * 20), where 0.8 is the acceptable fraction. Defaults to '0.8'.
+
+  -i : Set the client request interval (delay between requests) in seconds. Compared with the OK response rate reported by the client to determine the reward. Defaults to 1.0.
+
+  -g : Set the IP address of the client (the green host), defaults to '172.0.0.2'.
+
+  -r : Set the IP address of the adversary (the red host), defaults to '172.0.0.3'.
+
+  -a : Set the address of the out-of-band channel used by the client over which 1's and 0's are sent to indicate successful and failed responses received by the client. Defaults to '/dev/ttyUSB0'. If a filesystem address, a serial reader is initialised; if a network address in the form '172.0.1.3:8081', a UDP reader is initialised. In the UDP case, the IP address should be the IP *used by the sender*.
+
+  -s : Set the length of the rolling window used to evaluate the average OK response rate indicated by the data received over the out-of-band channel with the client. Defaults to 3.0.
+]}
+
+{1 Installation}
+[blue] can be installed locally with:
+{[
+opam install .
+]}
+
+[blue] is also installable as a Nix package (there is a {{:https://github.com/edchapman88/blue/blob/main/flake.nix}[flake.nix]} file at the root of the repository).
+
+{1 Library Overview}
+{2 Defining the [Agent] module}
+The {{!Blue.MarkovCompressor}[MarkovCompressor]}, {{!Blue.Reward}[Reward]} and {{!Blue.CountBasedPolicy}[CountBasedPolicy]} modules implement the interface defined in the {{!/markov/page-index}markov} library. Together they parameterise the {{!/markov/Markov.Agent}[Markov.Agent]} module.
+
+The source code for the [blue] executable is simply:
+{[
+open Blue
+
+module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (CountBasedPolicy)
+
+let () =
+  Cli.arg_parse ();
+  Agent.act (Agent.init_policy ())
+]}
+
+A [Markov.Agent] module is instatiated, and an [Agent.act] loop commenced.
+
+{2 The {{!Blue.System}[System]} module}
+The [System] module defines the particular functions used by the Agent to interact with the surrounding cyber system. It's implementation is {e specific} to the {{:https://github.com/edchapman88/r3ace#a-simple-decision-problem}Simple Decision Problem}, defined in the R{^ 3}ACE project.
+
+{1 Defining, Training and Evaluating a new Agent}
+An Agent can be defined with {b any policy that implements the {{!/markov/Markov.Agent.RLPolicyType}[RLPolicyType]} interface} in the {{!/markov/page-index}markov} library.
+
+For example, replacing the executable source code ({{:https://github.com/edchapman88/blue/blob/main/bin/main.ml}/bin/main.ml}) with:
+{[
+open Blue
+
+module CleverPolicy = struct
+(* Your implementation here *) ...
+end
+
+module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (CleverPolicy)
+
+let () =
+  Cli.arg_parse ();
+  Agent.act (Agent.init_policy ())
+]}
+
+Running this executable on {{:https://github.com/edchapman88/r3ace}R{^ 3}ACE} infrastructure will train or evaluate your [CleverPolicy].
+
+{2 Training vs. Evaluating}
+This distinction comes down to whether or not the policy implementation is 'self-optimising' (e.g. the program mutates the policy based on the rewards returned by the reward function). In the case of the {{!Blue.CountBasedPolicy}[Blue.CountBasedPolicy]}, the policy 'trains' for a specific number of policy steps (configured in the [blue] CLI), after which the policy is frozen and the subsequent period could be considered policy evaluation.
