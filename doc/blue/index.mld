@@ -1,11 +1,11 @@
 {0 The [blue] program and library}
 [blue] exposes an executable and a supporting library of helper functions. The executable {b initialises and runs an online learning agent} - repeatedly collecting information from the surrounding cyber system, and selecting actions that are executed, causing effects in the surrounding system.
 
-[blue] is a major component of the {{:https://github.com/edchapman88/r3ace}R{^ 3}ACE} project: {e Replicable} and {i Reproducible} {e Real-World} Autonomous Cyber Environments}.
+[blue] is a major component of the {{:https://github.com/edchapman88/r3ace}R{^ 3}ACE} project: {e Replicable} and {e Reproducible} {e Real-World} Autonomous Cyber Environments.
 
 [blue] is also an {b implementation of the {{!/markov/page-index}markov} interface library}. The [markov] library defines a {e reusable} abstract software interface for {b online learning agents} that interact with {b real systems}.
 
-[blue] is implemented the way it is, such that the blue agent is faced with a specific decision problem - outlined as the {{:https://github.com/edchapman88/r3ace}Simple Decision Problem} in the R{^ 3}ACE docs.
+[blue] is implemented the way it is, such that the blue agent is faced with a specific decision problem - outlined as the {{:https://github.com/edchapman88/r3ace/#a-simple-decision-problem}Simple Decision Problem} in the R{^ 3}ACE docs.
 
 {1 Usage}
 The [blue] executable exposes a documented Command Line Interface (CLI). To learn about the CLI options and arguments, run:
@@ -67,7 +67,7 @@ let () =
 A [Markov.Agent] module is instatiated, and an [Agent.act] loop commenced.
 
 {2 The {{!Blue.System}[System]} module}
-The [System] module defines the particular functions used by the Agent to interact with the surrounding cyber system. It's implementation is {e specific} to the {{:https://github.com/edchapman88/r3ace}Simple Decision Problem}, defined in the R{^ 3}ACE project.
+The [System] module defines the particular functions used by the Agent to interact with the surrounding cyber system. It's implementation is {e specific} to the {{:https://github.com/edchapman88/r3ace#a-simple-decision-problem}Simple Decision Problem}, defined in the R{^ 3}ACE project.
 
 {1 Defining, Training and Evaluating a new Agent}
 An Agent can be defined with {b any policy that implements the {{!/markov/Markov.Agent.RLPolicyType}[RLPolicyType]} interface} in the {{!/markov/page-index}markov} library.
