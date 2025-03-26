@@ -34,6 +34,8 @@
    (odoc-driver :with-doc)
    domainslib
    lwt 
+   cohttp
+   cohttp-lwt-unix
    markov
    core
    re
