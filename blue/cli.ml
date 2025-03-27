@@ -25,7 +25,6 @@ let parse_addr raw_addr =
   else Unix.ADDR_UNIX raw_addr
 
 let _log_path = ref ""
-let _n_exploration_steps = ref 300
 let _obs_time_delay = ref 5.0
 let _acceptable_fraction = ref 0.8
 let _request_interval = ref 1.
@@ -34,6 +33,8 @@ let _red_ip = ref "172.0.0.3"
 let _response_signal_addr = ref "/dev/ttyUSB0"
 let _parsed_response_signal_addr = ref (parse_addr !_response_signal_addr)
 let _rolling_window_secs = ref 3.0
+let _n_exploration_steps = ref 300
+let _server_policy_addr = ref ""
 
 let speclist =
   [
@@ -42,10 +43,6 @@ let speclist =
       ": Optionally write a log file in the specified directory with \
        information about the sequence of states observed and actions taken. If \
        no log file is specified, the information is written to stdout.\n" );
-    ( "-e",
-      Arg.Set_int _n_exploration_steps,
-      ": Set the number of observations used by the policy for exploration, \
-       after which actions are selected for exploitation. Defaults to 300.\n" );
     ( "-t",
       Arg.Set_float _obs_time_delay,
       ": Set the constant time delay between observations in seconds. Defaults \
@@ -82,10 +79,25 @@ let speclist =
       ": Set the length of the rolling window used to evaluate the average OK \
        response rate indicated by the data received over the out-of-band \
        channel with the client. Defaults to 3.0.\n" );
+    ( "-e",
+      Arg.Set_int _n_exploration_steps,
+      ": Set the number of observations used by the policy for exploration, \
+       after which actions are selected for exploitation. Defaults to 300.\n" );
+    ( "--server-policy",
+      Arg.Set_string _server_policy_addr,
+      ": Set the IP address of a policy server, overriding the \
+       CountBasedPolicy. Serialised observations and rewards are sent as POST \
+       requests to the configured address and actions are parsed from the \
+       responses. The '-e' flag, used to configure the CountBasedPolicy, is \
+       ignored when '--server-policy' is used.\n" );
   ]
 
 let log_path () =
   if String.length !_log_path == 0 then None else Some !_log_path
+
+let server_policy () =
+  if String.length !_server_policy_addr == 0 then None
+  else Some !_server_policy_addr
 
 let n_exploration_steps () = !_n_exploration_steps
 let obs_time_delay () = !_obs_time_delay

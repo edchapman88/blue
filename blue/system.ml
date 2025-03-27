@@ -38,11 +38,16 @@ type eff =
   | ToggleGreen
   | ToggleRed
 
-let string_of_eff e =
-  match e with
+let string_of_eff = function
   | Wait -> "Wait"
   | ToggleGreen -> "ToggleGreen"
   | ToggleRed -> "ToggleRed"
+
+let eff_of_string = function
+  | "Wait" -> Ok Wait
+  | "ToggleGreen" -> Ok ToggleGreen
+  | "ToggleRed" -> Ok ToggleRed
+  | s -> Error (Printf.sprintf "Unrecognised effect: '%s'" s)
 
 let random_eff () =
   match Random.int 3 with
