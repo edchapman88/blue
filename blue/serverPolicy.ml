@@ -16,34 +16,38 @@ let init () = 0
 let init_observer = MarkovCompressor.observe
 let time_before_retry = 3
 
-let body_of_sr (state, reward) =
-  (state, reward) |> Reward.string_of_state_reward |> Cohttp_lwt.Body.of_string
-
-let try_promise promise =
-  Lwt.try_bind
-    (fun () -> promise)
-    (fun res -> Lwt.return (Ok res))
-    (fun e -> Lwt.return (Error (Printexc.to_string e)))
-
 let request (state, reward) =
-  let body = body_of_sr (state, reward) in
-  Cohttp_lwt_unix.Client.post ~body
-    (Uri.of_string @@ Option.get @@ Cli.server_policy ())
-  |> try_promise
+  let addr = Cli.server_policy () |> Option.get in
+  let sock = Unix.(socket PF_INET SOCK_STREAM 0) in
+  let _ = Unix.connect sock addr in
 
-let post (state, reward) =
-  let open Lwt.Infix in
-  let res_body = request (state, reward) >|= Result.map snd in
-  let body_string =
-    res_body
-    >>= (function
-          | Ok body -> try_promise @@ Cohttp_lwt.Body.to_string body
-          | Error msg -> Lwt.return (Error msg))
-    |> Lwt_main.run
+  let in_ch = Unix.in_channel_of_descr sock in
+  let out_ch = Unix.out_channel_of_descr sock in
+  let body = (state, reward) |> Reward.string_of_state_reward in
+  output_string out_ch
+  @@ Printf.sprintf
+       "POST / HTTP/1.1\r\n\
+        Accept: application/json\r\n\
+        Content-Type: application/json\r\n\
+        Content-Length: %d\r\n\
+        \r\n\
+        %s"
+       (String.length body) body;
+  flush out_ch;
+
+  let rec readall ic acc =
+    try readall ic (acc ^ input_line ic)
+    with End_of_file ->
+      Unix.close sock;
+      acc
   in
-  body_string |> fun r ->
-  Result.bind r System.eff_of_string
-  |> Result.map_error @@ fun reason -> "PolicyServer failed with: " ^ reason
+
+  let res = readall in_ch "" in
+  let start_bod = String.rindex_from res (String.length res - 1) '\r' + 1 in
+  let len_bod = String.length res - start_bod in
+  String.sub res start_bod len_bod
+
+let post (state, reward) = request (state, reward) |> System.eff_of_string
 
 let infer policy (state, reward) =
   (* Log state and reward. *)

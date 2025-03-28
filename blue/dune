@@ -6,6 +6,4 @@
    unix
    domainslib
    re
-   lwt
-   cohttp-lwt-unix
    core))

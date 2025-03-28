@@ -9,19 +9,23 @@ let usage_msg =
    /dev/ttyUSB0 -s 3.0 \n\n\
   \ Options:"
 
+let parse_ip raw_addr =
+  try
+    match String.split_on_char ':' raw_addr with
+    | [ ip; port ] ->
+        Unix.ADDR_INET (Unix.inet_addr_of_string ip, int_of_string port)
+    | _ -> raise @@ Failure "Network addresses must have exactly one ':'."
+  with Failure msg ->
+    failwith
+    @@ Printf.sprintf
+         "Failed parsing address: '%s'.\n\
+         \ Error: %s\n\
+         \ Accepted format is e.g. '172.0.1.1:8081'" raw_addr msg
+
 let parse_addr raw_addr =
   if String.contains raw_addr ':' then
-    try
-      match String.split_on_char ':' raw_addr with
-      | [ ip; port ] ->
-          Unix.ADDR_INET (Unix.inet_addr_of_string ip, int_of_string port)
-      | _ -> raise @@ Failure "Network addresses must have exactly one ':'."
-    with Failure msg ->
-      failwith
-      @@ Printf.sprintf
-           "Failed parsing response signal address: '%s'. Accepted formats are \
-            e.g. '/dev/ttyUSB0' or '172.0.1.1:8081'. %s"
-           raw_addr msg
+    try parse_ip raw_addr
+    with Failure msg -> failwith @@ msg ^ " or '/dev/USB0'"
   else Unix.ADDR_UNIX raw_addr
 
 let _log_path = ref ""
@@ -35,6 +39,7 @@ let _parsed_response_signal_addr = ref (parse_addr !_response_signal_addr)
 let _rolling_window_secs = ref 3.0
 let _n_exploration_steps = ref 300
 let _server_policy_addr = ref ""
+let _parsed_server_policy_addr = ref None
 
 let speclist =
   [
@@ -95,11 +100,6 @@ let speclist =
 let log_path () =
   if String.length !_log_path == 0 then None else Some !_log_path
 
-let server_policy () =
-  if String.length !_server_policy_addr == 0 then None
-  else Some !_server_policy_addr
-
-let n_exploration_steps () = !_n_exploration_steps
 let obs_time_delay () = !_obs_time_delay
 let acceptable_fraction () = !_acceptable_fraction
 let request_interval () = !_request_interval
@@ -107,9 +107,13 @@ let green_ip () = !_green_ip
 let red_ip () = !_red_ip
 let response_signal_addr () = !_parsed_response_signal_addr
 let rolling_window_secs () = !_rolling_window_secs
+let n_exploration_steps () = !_n_exploration_steps
+let server_policy () = !_parsed_server_policy_addr
 
 let arg_parse () =
   let parse_positional_args _ = () in
   Arg.parse speclist parse_positional_args usage_msg;
   let raw_addr = !_response_signal_addr in
-  _parsed_response_signal_addr := parse_addr raw_addr
+  _parsed_response_signal_addr := parse_addr raw_addr;
+  if String.length !_server_policy_addr > 0 then
+    _parsed_server_policy_addr := Some (parse_ip !_server_policy_addr)
