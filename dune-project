@@ -33,7 +33,6 @@
    (odoc :with-doc)
    (odoc-driver :with-doc)
    domainslib
-   lwt 
    markov
    core
    re
