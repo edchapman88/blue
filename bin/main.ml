@@ -8,8 +8,18 @@
 *)
 
 open Blue
-module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (CountBasedPolicy)
+
+module type P =
+  Markov.Agent.RLPolicyType
+    with type state = MarkovCompressor.state
+    with type reward = Reward.t
+
+let policy_module is_server =
+  if is_server then (module ServerPolicy : P) else (module CountBasedPolicy)
 
 let () =
   Cli.arg_parse ();
+  let is_server = Cli.server_policy () |> Option.is_some in
+  let module Policy = (val policy_module is_server) in
+  let module Agent = Markov.Agent.Make (MarkovCompressor) (Reward) (Policy) in
   Agent.act (Agent.init_policy ())
